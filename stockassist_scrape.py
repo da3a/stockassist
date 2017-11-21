@@ -7,6 +7,10 @@ import requests
 from requests.packages.urllib3.exceptions import InsecureRequestWarning
 import bs4 as bs
 import pickle
+import datetime as dt
+import pandas_datareader.data as web
+import pandas as pd
+import numpy as np
 
 HEADERS = {'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10.10; rv:39.0) Gecko/20100101 Firefox/39.0'}
 MARKET = 'nasdaq'
@@ -53,11 +57,32 @@ def get_all_ticker_symbols_from_file():
     with open(TICKER_FILE,'rb') as f:
         ticker_symbols = pickle.load(f)
     return ticker_symbols
+
+def get_ticker_historical_data_from_web(ticker_symbol, start_time, end_time):
+    try:
+        df = web.DataReader(ticker_symbol,'google',start_time, end_time)
+        df.to_csv('{}/{}/{}.csv'.format(ROOT, MARKET,ticker_symbol))
+        return df
+    except:
+        return pd.DataFrame({'empty':[]})
+
+def read_ticker_historical_file(file_name):
+    print('read_ticker_historical_file {}'.format(file_name))
+    data = pd.read_csv(file_name, sep=',',usecols=[0,4],names=['Date','Price'],header=1)
+    returns = np.array(data['Price'][1:],np.float)/np.array(data['Price'][:-1],np.float)-1
+    data['Returns'] = np.append(returns,np.nan)      
+    data.index = data['Date']
+    return data
+
 #ticker_symbols = get_all_ticker_symbols()
 
+start_time = dt.datetime(2017,1,1)
+end_time = dt.datetime(2017,11,1)
+
 ticker_symbols = get_all_ticker_symbols_from_file()
-
-
-
-# for ticker_symbol in ticker_symbols:
-#     print(ticker_symbol)
+for ticker_symbol in ticker_symbols[:]:
+    file_name = '{}/{}/{}.csv'.format(ROOT, MARKET,ticker_symbol)
+    #if not os.path.exists(file_name):
+    get_ticker_historical_data_from_web(ticker_symbol, start_time, end_time)
+    #data = read_ticker_historical_file(file_name)
+    #print(data.head())
