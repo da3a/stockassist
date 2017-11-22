@@ -15,7 +15,8 @@ import numpy as np
 HEADERS = {'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10.10; rv:39.0) Gecko/20100101 Firefox/39.0'}
 MARKET = 'nasdaq'
 ROOT = 'c:/dawa/stockassist'
-TICKER_FILE = '{}/{}.pickle'.format(ROOT, MARKET) 
+TICKER_FILE = '{}/{}.pickle'.format(ROOT, MARKET)
+MARKETDATA = '^NDX.csv'
 
 url = 'http://www.nasdaq.com/screening/companies-by-industry.aspx?exchange=NASDAQ&pagesize=200&page={}'
 
@@ -59,6 +60,7 @@ def get_all_ticker_symbols_from_file():
     return ticker_symbols
 
 def get_ticker_historical_data_from_web(ticker_symbol, start_time, end_time):
+    print('get_ticker_historical_data_from_web {} {} {}'.format(ticker_symbol, start_time, end_time))
     try:
         df = web.DataReader(ticker_symbol,'google',start_time, end_time)
         df.to_csv('{}/{}/{}.csv'.format(ROOT, MARKET,ticker_symbol))
@@ -74,15 +76,32 @@ def read_ticker_historical_file(file_name):
     data.index = data['Date']
     return data
 
+def get_ticker_historical_data(ticker_symbol, start_time, end_time):
+    file_name = '{}/{}/{}.csv'.format(ROOT, MARKET,ticker_symbol)
+    if not os.path.isfile(file_name):
+        get_ticker_historical_data_from_web(ticker_symbol, start_time, end_time)
+    try:
+        return read_ticker_historical_file(file_name)
+    except:
+        return pd.DataFrame({'empty':[]})
+
+
+def load_market_data():
+    file_name = '{}/{}'.format(ROOT, MARKETDATA)
+    market_data = pd.read_csv(file_name,sep=',',usecols=[0,5],names=['Date','Price'],header=1)
+    market_returns = np.array(market_data['Price'][1:],np.float)/np.array(market_data['Price'][:-1],np.float)-1
+    market_data['Returns'] =np.append(market_returns, np.nan)
+    market_data.index = market_data['Date']
+    return market_data
+
 #ticker_symbols = get_all_ticker_symbols()
 
-start_time = dt.datetime(2017,1,1)
-end_time = dt.datetime(2017,11,1)
-
-ticker_symbols = get_all_ticker_symbols_from_file()
-for ticker_symbol in ticker_symbols[:]:
-    file_name = '{}/{}/{}.csv'.format(ROOT, MARKET,ticker_symbol)
-    #if not os.path.exists(file_name):
-    get_ticker_historical_data_from_web(ticker_symbol, start_time, end_time)
-    #data = read_ticker_historical_file(file_name)
-    #print(data.head())
+if __name__ == "__main__":
+    start_time = dt.datetime(2017,1,1)
+    end_time = dt.datetime(2017,11,1)
+    ticker_symbols = get_all_ticker_symbols_from_file()
+    for ticker_symbol in ticker_symbols[:]:
+        file_name = '{}/{}/{}.csv'.format(ROOT, MARKET,ticker_symbol)
+        #get_ticker_historical_data_from_web(ticker_symbol, start_time, end_time)
+        data = get_ticker_historical_data(ticker_symbol, start_time, end_time)
+        print(data.head()) 
