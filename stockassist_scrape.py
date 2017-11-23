@@ -14,7 +14,7 @@ import numpy as np
 
 HEADERS = {'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10.10; rv:39.0) Gecko/20100101 Firefox/39.0'}
 MARKET = 'nasdaq'
-ROOT = 'c:/dawa/stockassist'
+ROOT = 'd:/stockassist'
 TICKER_FILE = '{}/{}.pickle'.format(ROOT, MARKET)
 MARKETDATA = '^NDX.csv'
 
@@ -45,9 +45,6 @@ def get_all_ticker_symbols_from_web():
         ticker_symbols.extend(paged_ticker_symbols)
     return ticker_symbols
 
-# if __main__ == '__main__':
-#     print('running library')
-
 def save_all_ticker_symbols():
     ticker_symbols = get_all_ticker_symbols_from_web()
 
@@ -63,9 +60,13 @@ def get_ticker_historical_data_from_web(ticker_symbol, start_time, end_time):
     print('get_ticker_historical_data_from_web {} {} {}'.format(ticker_symbol, start_time, end_time))
     try:
         df = web.DataReader(ticker_symbol,'google',start_time, end_time)
-        df.to_csv('{}/{}/{}.csv'.format(ROOT, MARKET,ticker_symbol))
+        file_name = '{}/{}/{}.csv'.format(ROOT, MARKET,ticker_symbol)
+        print('writing to file:'.format(file_name))
+        df.to_csv(file_name)
         return df
     except:
+        e = sys.exc_info()
+        print('exception writing file:{0}'.format(e))
         return pd.DataFrame({'empty':[]})
 
 def read_ticker_historical_file(file_name):
@@ -78,11 +79,14 @@ def read_ticker_historical_file(file_name):
 
 def get_ticker_historical_data(ticker_symbol, start_time, end_time):
     file_name = '{}/{}/{}.csv'.format(ROOT, MARKET,ticker_symbol)
+    print('reading file:{}'.format(file_name))
     if not os.path.isfile(file_name):
+        print('file not found'.format(file_name))
         get_ticker_historical_data_from_web(ticker_symbol, start_time, end_time)
     try:
         return read_ticker_historical_file(file_name)
     except:
+        print('exception reading file')
         return pd.DataFrame({'empty':[]})
 
 
@@ -97,11 +101,13 @@ def load_market_data():
 #ticker_symbols = get_all_ticker_symbols()
 
 if __name__ == "__main__":
+    print('StockAssist Scraper')
     start_time = dt.datetime(2017,1,1)
     end_time = dt.datetime(2017,11,1)
     ticker_symbols = get_all_ticker_symbols_from_file()
-    for ticker_symbol in ticker_symbols[:]:
+    for ticker_symbol in ticker_symbols[:10]:
+        print('ticker:{}'.format(ticker_symbol))
         file_name = '{}/{}/{}.csv'.format(ROOT, MARKET,ticker_symbol)
-        #get_ticker_historical_data_from_web(ticker_symbol, start_time, end_time)
-        data = get_ticker_historical_data(ticker_symbol, start_time, end_time)
-        print(data.head()) 
+        get_ticker_historical_data(ticker_symbol, start_time, end_time)
+        ##data = get_ticker_historical_data(ticker_symbol, start_time, end_time)
+        #print(data.head()) 
