@@ -14,7 +14,7 @@ import numpy as np
 
 HEADERS = {'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10.10; rv:39.0) Gecko/20100101 Firefox/39.0'}
 MARKET = 'nasdaq'
-ROOT = 'd:/stockassist'
+ROOT = 'c:/dawa/stockassist'
 TICKER_FILE = '{}/{}.pickle'.format(ROOT, MARKET)
 MARKETDATA = '^NDX.csv'
 
@@ -47,7 +47,6 @@ def get_all_ticker_symbols_from_web():
 
 def save_all_ticker_symbols():
     ticker_symbols = get_all_ticker_symbols_from_web()
-
     with open(TICKER_FILE, 'wb') as f:
         pickle.dump(ticker_symbols,f)
 
@@ -65,12 +64,11 @@ def get_ticker_historical_data_from_web(ticker_symbol, start_time, end_time):
         df.to_csv(file_name)
         return df
     except:
-        e = sys.exc_info()
-        print('exception writing file:{0}'.format(e))
+        print('exception writing file:{0}'.format(sys.exc_info()))
         return pd.DataFrame({'empty':[]})
 
 def read_ticker_historical_file(file_name):
-    print('read_ticker_historical_file {}'.format(file_name))
+    #print('read_ticker_historical_file {}'.format(file_name))
     data = pd.read_csv(file_name, sep=',',usecols=[0,4],names=['Date','Price'],header=1)
     returns = np.array(data['Price'][1:],np.float)/np.array(data['Price'][:-1],np.float)-1
     data['Returns'] = np.append(returns,np.nan)      
@@ -79,16 +77,15 @@ def read_ticker_historical_file(file_name):
 
 def get_ticker_historical_data(ticker_symbol, start_time, end_time):
     file_name = '{}/{}/{}.csv'.format(ROOT, MARKET,ticker_symbol)
-    print('reading file:{}'.format(file_name))
+    #print('reading file:{}'.format(file_name))
     if not os.path.isfile(file_name):
         print('file not found'.format(file_name))
         get_ticker_historical_data_from_web(ticker_symbol, start_time, end_time)
     try:
         return read_ticker_historical_file(file_name)
     except:
-        print('exception reading file')
+        print('exception writing file:{0}'.format(sys.exc_info()))      
         return pd.DataFrame({'empty':[]})
-
 
 def load_market_data():
     file_name = '{}/{}'.format(ROOT, MARKETDATA)
