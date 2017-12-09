@@ -17,6 +17,7 @@ MARKET = 'nasdaq'
 ROOT = 'c:/dawa/stockassist'
 TICKER_FILE = '{}/{}.pickle'.format(ROOT, MARKET)
 MARKETDATA = '^NDX.csv'
+SOURCE = 'yahoo' # or google - now not working 
 
 url = 'http://www.nasdaq.com/screening/companies-by-industry.aspx?exchange=NASDAQ&pagesize=200&page={}'
 
@@ -58,7 +59,7 @@ def get_all_ticker_symbols_from_file():
 def get_ticker_historical_data_from_web(ticker_symbol, start_time, end_time):
     print('get_ticker_historical_data_from_web {} {} {}'.format(ticker_symbol, start_time, end_time))
     try:
-        df = web.DataReader(ticker_symbol,'google',start_time, end_time)
+        df = web.DataReader(ticker_symbol,SOURCE,start_time, end_time)
         file_name = '{}/{}/{}.csv'.format(ROOT, MARKET,ticker_symbol)
         print('writing to file:'.format(file_name))
         df.to_csv(file_name)
@@ -95,16 +96,21 @@ def load_market_data():
     market_data.index = market_data['Date']
     return market_data
 
-#ticker_symbols = get_all_ticker_symbols()
+#step 1 get some tickers
+#ticker_symbols = save_all_ticker_symbols()
 
+#step 2 load some historical data from the web
 if __name__ == "__main__":
     print('StockAssist Scraper')
     start_time = dt.datetime(2017,1,1)
-    end_time = dt.datetime(2017,11,1)
+    end_time = dt.datetime(2017,12,1)
     ticker_symbols = get_all_ticker_symbols_from_file()
-    for ticker_symbol in ticker_symbols[:10]:
+    for ticker_symbol in ticker_symbols[:]:
         print('ticker:{}'.format(ticker_symbol))
-        file_name = '{}/{}/{}.csv'.format(ROOT, MARKET,ticker_symbol)
-        get_ticker_historical_data(ticker_symbol, start_time, end_time)
-        ##data = get_ticker_historical_data(ticker_symbol, start_time, end_time)
-        #print(data.head()) 
+        get_ticker_historical_data_from_web(ticker_symbol, start_time, end_time)
+#       
+
+        # file_name = '{}/{}/{}.csv'.format(ROOT, MARKET,ticker_symbol)
+        # get_ticker_historical_data(ticker_symbol, start_time, end_time)
+#         ##data = get_ticker_historical_data(ticker_symbol, start_time, end_time)
+#         #print(data.head()) 
